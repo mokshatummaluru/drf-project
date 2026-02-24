@@ -1,9 +1,9 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.http import Http404, JsonResponse
 from students.models import Student
 from .serializers import EmployeeSerializer, StudentSerializer
 from rest_framework.response import Response
-from rest_framework import status, mixins, generics
+from rest_framework import status, mixins, generics,viewsets
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from employees.models import Employee
@@ -115,14 +115,34 @@ def studentDetailView(request,pk):
 
 
 
-class Employees(generics.ListCreateAPIView):
-    queryset = Employee.objects.all()
-    serializer_class = EmployeeSerializer
+# class Employees(generics.ListCreateAPIView):
+#     queryset = Employee.objects.all()
+#     serializer_class = EmployeeSerializer
     
     
     
     
-class EmployeeDetail(generics.RetrieveAPIView,generics.UpdateAPIView,generics.DestroyAPIView):
-    queryset = Employee.objects.all()
-    serializer_class = EmployeeSerializer
-    lookup_field='pk'
+# class EmployeeDetail(generics.RetrieveAPIView,generics.UpdateAPIView,generics.DestroyAPIView):
+#     queryset = Employee.objects.all()
+#     serializer_class = EmployeeSerializer
+#     lookup_field='pk'
+
+
+class EmployeeViewset(viewsets.ViewSet):
+    def list(self,request):
+        queryset=Employee.objects.all()
+        serializer=EmployeeSerializer(queryset,many=True)
+        return Response(serializer.data,status=status.HTTP_200_OK)
+    
+    def create(self,request):
+        serializer=EmployeeSerializer(data=request.data)
+        if(serializer.is_valid()):
+            serializer.save()
+            return Response(serializer.data,status=status.HTTP_201_CREATED)
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+    
+    def retrieve(self,request,pk=None):
+        employee=Employee.get_object_or_404(Employee,pk=pk)
+        serializer=EmployeeSerializer(employee)
+        return Response(serializer.data,status=status.HTTP_200_OK)
+    
